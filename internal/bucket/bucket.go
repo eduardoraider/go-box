@@ -18,7 +18,11 @@ func New(bt StorageBucketType, cfg any) (b *Bucket, err error) {
 
 	switch bt {
 	case AwsProvider:
-		// TODO: Implement Aws Provider
+		if rt.Name() != "AwsConfig" {
+			return nil, fmt.Errorf("configuration must be of type AwsConfig")
+		}
+
+		b.p = newAwsSession(cfg.(AwsConfig))
 	default:
 		return nil, fmt.Errorf("unknown storage bucket type: %v", bt)
 	}
