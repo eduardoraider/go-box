@@ -20,7 +20,11 @@ func New(qt AppQueueType, cfg any) (q *Queue, err error) {
 		if rt.Name() != "RabbitMQConfig" {
 			return nil, fmt.Errorf("configuration must be of type RabbitMQConfig")
 		}
-		fmt.Println("RabbitMQ not implemented")
+		conn, err := newRabbitConn(cfg.(RabbitMQConfig))
+		if err != nil {
+			return nil, err
+		}
+		q.qc = conn
 	default:
 		log.Fatal("Unsupported queue type")
 	}
@@ -29,18 +33,17 @@ func New(qt AppQueueType, cfg any) (q *Queue, err error) {
 
 type AppQueueConnection interface {
 	Publish([]byte) error
-	Consume() error
+	Consume(chan<- AppQueueDto) error
 }
 
 type Queue struct {
-	cfg any
-	qc  AppQueueConnection
+	qc AppQueueConnection
 }
 
 func (q *Queue) Publish(msg []byte) error {
 	return q.qc.Publish(msg)
 }
 
-func (q *Queue) Consume() error {
-	return q.qc.Consume()
+func (q *Queue) Consume(cdto chan<- AppQueueDto) error {
+	return q.qc.Consume(cdto)
 }
