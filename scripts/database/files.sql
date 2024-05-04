@@ -7,7 +7,7 @@ CREATE TABLE files (
     path VARCHAR(250) NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp,
     modified_at TIMESTAMP NOT NULL,
-    deleted BOLL NOT NULL DEFAULT false,
+    deleted BOOL NOT NULL DEFAULT false,
     PRIMARY KEY(id),
     CONSTRAINT fk_folders
       FOREIGN KEY(folder_id)
