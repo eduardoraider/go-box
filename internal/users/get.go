@@ -30,8 +30,8 @@ func (h *handler) GetByID(rw http.ResponseWriter, r *http.Request) {
 }
 
 func Get(db *sql.DB, id int64) (*User, error) {
-	selectData, _ := db.Prepare("SELECT * FROM users WHERE id=$1")
-	row := selectData.QueryRow(id)
+	stmt := `SELECT * FROM users WHERE id=$1`
+	row := db.QueryRow(stmt, id)
 
 	var u User
 	err := row.Scan(&u.ID, &u.Name, &u.Login, &u.Password,
