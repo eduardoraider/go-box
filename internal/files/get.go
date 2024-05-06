@@ -2,18 +2,7 @@ package files
 
 import (
 	"database/sql"
-	"github.com/go-chi/chi"
-	"net/http"
-	"strconv"
 )
-
-func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
 
 func Get(db *sql.DB, id int64) (*File, error) {
 	stmt := `SELECT * FROM files WHERE id = $1;`
