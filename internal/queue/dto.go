@@ -5,7 +5,7 @@ import "encoding/json"
 type AppQueueDto struct {
 	Filename string `json:"filename"`
 	Path     string `json:"path"`
-	ID       string `json:"id"`
+	ID       int    `json:"id"`
 }
 
 func (q *AppQueueDto) Marshal() ([]byte, error) {

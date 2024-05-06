@@ -12,6 +12,23 @@ var (
 	ErrPathRequired  = errors.New("folder path is required")
 )
 
+func New(ownerId int64, name, fileType, path string) (*File, error) {
+	f := File{
+		OwnerId:    ownerId,
+		Name:       name,
+		Type:       fileType,
+		Path:       path,
+		ModifiedAt: time.Now(),
+	}
+
+	err := f.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return &f, nil
+}
+
 type File struct {
 	ID         int64     `json:"id"`
 	FolderId   int64     `json:"-"`
