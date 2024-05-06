@@ -108,7 +108,7 @@ func deleteFiles(db *sql.DB, folderId int64) error {
 }
 
 func Delete(db *sql.DB, id int64) error {
-	deleteData, _ := db.Prepare("UPDATE folders SET modified_at=$1, deleted=true WHERE id=$2")
-	_, err := deleteData.Exec(time.Now(), id)
+	stmt := `UPDATE folders SET modified_at=$1, deleted=true WHERE id=$2`
+	_, err := db.Exec(stmt, time.Now(), id)
 	return err
 }

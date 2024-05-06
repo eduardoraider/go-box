@@ -11,8 +11,11 @@ var (
 
 func New(name string, parentId int64) (*Folder, error) {
 	f := Folder{
-		Name:     name,
-		ParentId: parentId,
+		Name: name,
+	}
+
+	if parentId > 0 {
+		f.ParentId = parentId
 	}
 
 	err := f.Validate()
