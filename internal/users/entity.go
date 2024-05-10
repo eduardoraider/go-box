@@ -70,8 +70,8 @@ func (u *User) Validate() error {
 		return ErrLoginRequired
 	}
 
-	blankPassword, _ := bcrypt.GenerateFromPassword([]byte(""), bcrypt.DefaultCost)
-	if u.Password == string(blankPassword) {
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(""), bcrypt.DefaultCost)
+	if u.Password == string(hashedPassword) {
 		return ErrPasswordRequired
 	}
 

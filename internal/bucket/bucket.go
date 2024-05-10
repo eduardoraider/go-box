@@ -9,11 +9,13 @@ import (
 
 const (
 	AwsProvider StorageBucketType = iota
+	MockProvider
 )
 
 type StorageBucketType int
 
 func New(bt StorageBucketType, cfg any) (b *Bucket, err error) {
+	b = new(Bucket)
 	rt := reflect.TypeOf(cfg)
 
 	switch bt {
@@ -23,6 +25,10 @@ func New(bt StorageBucketType, cfg any) (b *Bucket, err error) {
 		}
 
 		b.p = newAwsSession(cfg.(AwsConfig))
+	case MockProvider:
+		b.p = &MockBucket{
+			content: make(map[string][]byte),
+		}
 	default:
 		return nil, fmt.Errorf("unknown storage bucket type: %v", bt)
 	}

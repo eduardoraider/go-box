@@ -36,7 +36,11 @@ func (h *handler) Modify(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Get folder
+	f, err = GetFolder(h.db, int64(id))
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	rw.Header().Add("Content-Type", "application/json")
 	err = json.NewEncoder(rw).Encode(f)

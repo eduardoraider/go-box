@@ -3,12 +3,12 @@ package files
 import "database/sql"
 
 func List(db *sql.DB, folderId int64) ([]File, error) {
-	stmt := `SELECT * FROM files WHERE folder_id=$1 AND delete=false`
+	stmt := `SELECT * FROM files WHERE folder_id=$1 AND deleted=false`
 	return selectAllFiles(db, stmt)
 }
 
 func ListRoot(db *sql.DB) ([]File, error) {
-	stmt := `SELECT * FROM files WHERE folder_id IS NULL AND delete=false`
+	stmt := `SELECT * FROM files WHERE folder_id IS NULL AND deleted=false`
 	return selectAllFiles(db, stmt)
 }
 

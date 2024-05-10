@@ -8,11 +8,13 @@ import (
 
 const (
 	RabbitMQ AppQueueType = iota
+	Mock
 )
 
 type AppQueueType int
 
 func New(qt AppQueueType, cfg any) (q *Queue, err error) {
+	q = new(Queue)
 	rt := reflect.TypeOf(cfg)
 
 	switch qt {
@@ -25,6 +27,10 @@ func New(qt AppQueueType, cfg any) (q *Queue, err error) {
 			return nil, err
 		}
 		q.qc = conn
+	case Mock:
+		q.qc = &MockQueue{
+			make([]*AppQueueDto, 0),
+		}
 	default:
 		log.Fatal("Unsupported queue type")
 	}

@@ -76,7 +76,8 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rw.Header().Add("Content-Type", "text/html")
+	rw.WriteHeader(http.StatusCreated)
+	rw.Header().Add("Content-Type", "application/json")
 	err = json.NewEncoder(rw).Encode(entity)
 	if err != nil {
 		return

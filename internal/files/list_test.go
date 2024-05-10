@@ -18,7 +18,7 @@ func TestList(t *testing.T) {
 		AddRow(1, 2, 1, "Gopher.png", "image/png", "/", time.Now(), time.Now(), false).
 		AddRow(2, 2, 1, "Golang.jpg", "image/jpg", "/", time.Now(), time.Now(), false)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM files WHERE folder_id=$1 AND delete=false`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM files WHERE folder_id=$1 AND deleted=false`)).
 		WillReturnRows(rows)
 
 	_, err = List(db, 1)
@@ -43,7 +43,7 @@ func TestListRoot(t *testing.T) {
 		AddRow(1, nil, 1, "Gopher.png", "image/png", "/", time.Now(), time.Now(), false).
 		AddRow(2, nil, 1, "Golang.jpg", "image/jpg", "/", time.Now(), time.Now(), false)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM files WHERE folder_id IS NULL AND delete=false`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM files WHERE folder_id IS NULL AND deleted=false`)).
 		WillReturnRows(rows)
 
 	_, err = ListRoot(db)
