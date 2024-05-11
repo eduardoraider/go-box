@@ -52,7 +52,7 @@ func (h *handler) Modify(rw http.ResponseWriter, r *http.Request) {
 func Update(db *sql.DB, id int64, f *Folder) error {
 	f.ModifiedAt = time.Now()
 
-	stmt := `UPDATE folder SET name=$1, modified_at=$2 WHERE id=$3`
+	stmt := `UPDATE folders SET name=$1, modified_at=$2 WHERE id=$3`
 	_, err := db.Exec(stmt, f.Name, f.ModifiedAt, id)
 	return err
 }

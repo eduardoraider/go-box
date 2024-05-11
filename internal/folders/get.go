@@ -12,7 +12,7 @@ import (
 func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -38,7 +38,7 @@ func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetFolder(db *sql.DB, folderId int64) (*Folder, error) {
-	stmt := `SELECT * FROM folders WHERE id = $1`
+	stmt := `SELECT * FROM folders WHERE id=$1`
 	row := db.QueryRow(stmt, folderId)
 
 	var f Folder
@@ -51,7 +51,7 @@ func GetFolder(db *sql.DB, folderId int64) (*Folder, error) {
 }
 
 func getSubFolders(db *sql.DB, folderId int64) ([]Folder, error) {
-	stmt := `SELECT * FROM folders WHERE parent_id = $1 AND deleted = false`
+	stmt := `SELECT * FROM folders WHERE parent_id=$1 AND deleted=false`
 	rows, err := db.Query(stmt, folderId)
 	if err != nil {
 		return nil, err
