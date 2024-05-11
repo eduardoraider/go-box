@@ -4,22 +4,13 @@ import (
 	"context"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"testing"
-	"time"
 )
 
-func TestDeleteHTTP(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	h := handler{db}
-
+func (ts *TransactionSuite) TestDeleteHTTP() {
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/{id}", nil)
 
@@ -28,64 +19,33 @@ func TestDeleteHTTP(t *testing.T) {
 
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
-	filesRows := sqlmock.NewRows([]string{"id", "folder_id", "owner_id", "name", "type", "path", "created_at", "modified_at", "deleted"}).
-		AddRow(1, 1, 1, "Gopher.png", "image/png", "/", time.Now(), time.Now(), false).
-		AddRow(2, 1, 1, "Golang.jpg", "image/jpg", "/", time.Now(), time.Now(), false)
+	setMockListFiles(ts.mock)
+	setMockDeleteFile(ts.mock, "Gopher.png", 1)
+	setMockDeleteFile(ts.mock, "Golang.jpg", 2)
+	setMockGetSubFolder(ts.mock)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM files WHERE folder_id=$1 AND deleted=false`)).
-		WillReturnRows(filesRows)
+	setMockDelete(ts.mock)
 
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE files SET name=$1, modified_at=$2, deleted=$3 WHERE id=$4`)).
-		WithArgs("Gopher.png", AnyTime{}, true, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE files SET name=$1, modified_at=$2, deleted=$3 WHERE id=$4`)).
-		WithArgs("Golang.jpg", AnyTime{}, true, 2).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	foldersRows := sqlmock.NewRows([]string{"id", "parent_id", "name", "created_at", "modified_at", "deleted"}).
-		AddRow(1, 1, "Docs", time.Now(), time.Now(), false).
-		AddRow(2, 1, "Contracts", time.Now(), time.Now(), false)
-
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM folders WHERE parent_id = $1 AND deleted = false`)).
-		WithArgs(1).
-		WillReturnRows(foldersRows)
-
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE folders SET modified_at=$1, deleted=true WHERE id=$2`)).
-		WithArgs(AnyTime{}, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	h.Delete(rr, req)
-
-	if rr.Code != http.StatusNoContent {
-		t.Errorf("error: %v", rr)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
-
+	ts.handler.Delete(rr, req)
+	assert.Equal(ts.T(), http.StatusNoContent, rr.Code)
 }
 
-func TestDelete(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+func (ts *TransactionSuite) TestDelete() {
+	setMockDelete(ts.mock)
+
+	err := Delete(ts.conn, 1)
+	assert.NoError(ts.T(), err)
+}
+
+func setMockDelete(mock sqlmock.Sqlmock) {
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE folders SET modified_at=$1, deleted=true WHERE id=$2`)).
 		WithArgs(AnyTime{}, 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+}
 
-	err = Delete(db, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
+func setMockDeleteFile(mock sqlmock.Sqlmock, fileName string, id int64) {
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE files SET name=$1, modified_at=$2, deleted=$3 WHERE id=$4`)).
+		WithArgs(fileName, AnyTime{}, true, id).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 }

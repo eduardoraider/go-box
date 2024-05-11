@@ -3,58 +3,29 @@ package files
 import (
 	"bytes"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/eduardoraider/go-box/internal/bucket"
-	"github.com/eduardoraider/go-box/internal/queue"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"regexp"
-	"testing"
-	"time"
 )
 
-func TestCreate(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	b, err := bucket.New(bucket.MockProvider, nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	q, err := queue.New(queue.Mock, nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	h := handler{db, b, q}
-
+func (ts *TransactionSuite) TestCreate() {
 	// Start Upload
 	body := new(bytes.Buffer)
 
 	mw := multipart.NewWriter(body)
 
 	file, err := os.Open("./testdata/test_gopher.png")
-	if err != nil {
-		t.Error(err)
-	}
-
-	defer file.Close()
+	assert.NoError(ts.T(), err)
 
 	w, err := mw.CreateFormFile("file", "test_gopher.png")
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(ts.T(), err)
 
 	_, err = io.Copy(w, file)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(ts.T(), err)
 
 	mw.Close()
 	// End upload
@@ -63,49 +34,22 @@ func TestCreate(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/", body)
 	req.Header.Add("Content-Type", mw.FormDataContentType())
 
-	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO files (folder_id, owner_id, name, type, path, modified_at) VALUES ($1, $2, $3, $4, $5, $6)`)).
-		WithArgs(0, 1, "test_gopher.png", "application/octet-stream", "/test_gopher.png", AnyTime{}).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	setMockInsert(ts.mock, ts.entity)
 
-	h.Create(rr, req)
+	ts.handler.Create(rr, req)
+	assert.Equal(ts.T(), http.StatusCreated, rr.Code)
+}
 
-	if rr.Code != http.StatusCreated {
-		t.Errorf("error: %v", rr)
-	}
+func (ts *TransactionSuite) TestInsert() {
+	setMockInsert(ts.mock, ts.entity)
 
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
+	_, err := Insert(ts.conn, ts.entity)
+	assert.NoError(ts.T(), err)
 
 }
 
-func TestInsert(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	f, err := New(1, "Gopher.png", "image/png", "/")
-	if err != nil {
-		t.Error(err)
-	}
-
-	f.FolderId = 1
-	f.ModifiedAt = time.Now()
-
+func setMockInsert(mock sqlmock.Sqlmock, entity *File) {
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO files (folder_id, owner_id, name, type, path, modified_at) VALUES ($1, $2, $3, $4, $5, $6)`)).
-		WithArgs(1, 1, "Gopher.png", "image/png", "/", f.ModifiedAt).
+		WithArgs(0, entity.OwnerId, entity.Name, entity.Type, entity.Path, AnyTime{}).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	_, err = Insert(db, *f)
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
 }

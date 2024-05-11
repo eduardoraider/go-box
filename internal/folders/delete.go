@@ -12,7 +12,7 @@ import (
 func (h *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -49,29 +49,24 @@ func deleteSubFolders(db *sql.DB, folderId int64) error {
 
 	removedFolders := make([]Folder, 0, len(subFolders))
 	for _, sf := range subFolders {
-		err := Delete(db, sf.ID)
-		if err != nil {
-			break
-		}
 
 		err = deleteFolderContent(db, sf.ID)
 		if err != nil {
-			err := Update(db, sf.ID, &sf)
-			if err != nil {
-				break
-			}
+			Update(db, sf.ID, &sf)
+			break
+		}
+
+		err := Delete(db, sf.ID)
+		if err != nil {
 			break
 		}
 
 		removedFolders = append(removedFolders, sf)
 	}
 
-	if len(removedFolders) != len(subFolders) {
-		for _, sf := range removedFolders {
-			err := Update(db, sf.ID, &sf)
-			if err != nil {
-				return err
-			}
+	if len(subFolders) != len(removedFolders) {
+		for _, rf := range removedFolders {
+			Update(db, rf.ID, &rf)
 		}
 	}
 
@@ -79,7 +74,7 @@ func deleteSubFolders(db *sql.DB, folderId int64) error {
 }
 
 func deleteFiles(db *sql.DB, folderId int64) error {
-	f, err := files.List(db, int64(folderId))
+	f, err := files.List(db, folderId)
 	if err != nil {
 		return err
 	}
@@ -97,10 +92,7 @@ func deleteFiles(db *sql.DB, folderId int64) error {
 	if len(f) != len(removedFiles) {
 		for _, file := range removedFiles {
 			file.Deleted = false
-			err := files.Update(db, file.ID, &file)
-			if err != nil {
-				return err
-			}
+			files.Update(db, file.ID, &file)
 		}
 		return err
 	}

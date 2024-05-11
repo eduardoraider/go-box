@@ -50,7 +50,7 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		entity.FolderId = int64(fid)
 	}
 
-	id, err := Insert(h.db, *entity)
+	id, err := Insert(h.db, entity)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -85,7 +85,7 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 
 }
 
-func Insert(db *sql.DB, f File) (int64, error) {
+func Insert(db *sql.DB, f *File) (int64, error) {
 	stmt := `INSERT INTO files (folder_id, owner_id, name, type, path, modified_at) VALUES ($1, $2, $3, $4, $5, $6)`
 	result, err := db.Exec(stmt, f.FolderId, f.OwnerId, f.Name, f.Type, f.Path, f.ModifiedAt)
 	if err != nil {

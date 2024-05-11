@@ -5,7 +5,7 @@ import (
 )
 
 func Get(db *sql.DB, id int64) (*File, error) {
-	stmt := `SELECT * FROM files WHERE id = $1;`
+	stmt := `SELECT * FROM files WHERE id=$1`
 	row := db.QueryRow(stmt, id)
 
 	var f File

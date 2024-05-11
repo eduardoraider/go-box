@@ -4,22 +4,14 @@ import (
 	"context"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"testing"
 	"time"
 )
 
-func TestGetByID(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	h := handler{db}
-
+func (ts *TransactionSuite) TestGetByID() {
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/{id}", nil)
 
@@ -28,47 +20,24 @@ func TestGetByID(t *testing.T) {
 
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
-	rows := sqlmock.NewRows([]string{"id", "name", "login", "password", "created_at", "modified_at", "deleted", "last_login"}).
-		AddRow(1, "Eduardo", "wookye.dev@gmail.com", "12345678", time.Now(), time.Now(), false, time.Now())
+	setMockGet(ts.mock)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM users WHERE id=$1`)).
-		WithArgs(1).
-		WillReturnRows(rows)
-
-	h.GetByID(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("error: %v", rr)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
-
+	ts.handler.GetByID(rr, req)
+	assert.Equal(ts.T(), http.StatusOK, rr.Code)
 }
 
-func TestGet(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+func (ts *TransactionSuite) TestGet() {
+	setMockGet(ts.mock)
 
+	_, err := Get(ts.conn, 1)
+	assert.NoError(ts.T(), err)
+}
+
+func setMockGet(mock sqlmock.Sqlmock) {
 	rows := sqlmock.NewRows([]string{"id", "name", "login", "password", "created_at", "modified_at", "deleted", "last_login"}).
 		AddRow(1, "Eduardo", "wookye.dev@gmail.com", "12345678", time.Now(), time.Now(), false, time.Now())
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM users WHERE id=$1`)).
 		WithArgs(1).
 		WillReturnRows(rows)
-
-	_, err = Get(db, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
 }

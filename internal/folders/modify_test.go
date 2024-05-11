@@ -6,32 +6,21 @@ import (
 	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"testing"
-	"time"
 )
 
-func TestModify(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	h := handler{db}
-
+func (ts *TransactionSuite) TestModify() {
 	f := Folder{
 		ID:   1,
 		Name: "Docs",
 	}
 
 	var b bytes.Buffer
-	err = json.NewEncoder(&b).Encode(&f)
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when encoding user", err)
-	}
+	err := json.NewEncoder(&b).Encode(&f)
+	assert.NoError(ts.T(), err)
 
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/{id}", &b)
@@ -41,48 +30,22 @@ func TestModify(t *testing.T) {
 
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE folder SET name=$1, modified_at=$2 WHERE id=$3`)).
-		WithArgs("Docs", AnyTime{}, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	setMockUpdate(ts.mock)
+	setMockGet(ts.mock)
 
-	rows := sqlmock.NewRows([]string{"id", "parent_id", "name", "created_at", "modified_at", "deleted"}).
-		AddRow(1, 2, "Docs", time.Now(), time.Now(), false)
-
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM folders WHERE id = $1`)).
-		WithArgs(1).
-		WillReturnRows(rows)
-
-	h.Modify(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("error: %v", rr)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
-
+	ts.handler.Modify(rr, req)
+	assert.Equal(ts.T(), http.StatusOK, rr.Code)
 }
 
-func TestUpdate(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+func (ts *TransactionSuite) TestUpdate() {
+	setMockUpdate(ts.mock)
 
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE folder SET name=$1, modified_at=$2 WHERE id=$3`)).
-		WithArgs("Doc", AnyTime{}, 1).
+	err := Update(ts.conn, 1, &Folder{Name: "Docs"})
+	assert.NoError(ts.T(), err)
+}
+
+func setMockUpdate(mock sqlmock.Sqlmock) {
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE folders SET name=$1, modified_at=$2 WHERE id=$3`)).
+		WithArgs("Docs", AnyTime{}, 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	err = Update(db, 1, &Folder{Name: "Doc"})
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
 }

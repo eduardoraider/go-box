@@ -32,13 +32,13 @@ func (h *handler) Modify(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = Update(h.db, int64(file.ID), file)
+	err = Update(h.db, int64(id), file)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
+	rw.Header().Add("Content-Type", "application/json")
 	err = json.NewEncoder(rw).Encode(file)
 	if err != nil {
 		return

@@ -4,21 +4,13 @@ import (
 	"context"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"testing"
 )
 
-func TestDeleteHTTP(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	h := handler{db, nil, nil}
-
+func (ts *TransactionSuite) TestDeleteHTTP() {
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/{id}", nil)
 
@@ -27,41 +19,21 @@ func TestDeleteHTTP(t *testing.T) {
 
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE files SET modified_at=$1, deleted=true WHERE id=$2`)).
-		WithArgs(AnyTime{}, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	setMockDelete(ts.mock)
 
-	h.Delete(rr, req)
-
-	if rr.Code != http.StatusNoContent {
-		t.Errorf("error: %v", rr)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
-
+	ts.handler.Delete(rr, req)
+	assert.Equal(ts.T(), http.StatusNoContent, rr.Code)
 }
 
-func TestDelete(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+func (ts *TransactionSuite) TestDelete() {
+	setMockDelete(ts.mock)
 
+	err := Delete(ts.conn, 1)
+	assert.NoError(ts.T(), err)
+}
+
+func setMockDelete(mock sqlmock.Sqlmock) {
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE files SET modified_at=$1, deleted=true WHERE id=$2`)).
 		WithArgs(AnyTime{}, 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	err = Delete(db, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
 }

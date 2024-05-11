@@ -6,32 +6,21 @@ import (
 	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"testing"
-	"time"
 )
 
-func TestModify(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	h := handler{db, nil, nil}
-
+func (ts *TransactionSuite) TestModify() {
 	f := File{
 		ID:   1,
-		Name: "learning-golang.png",
+		Name: "Gopher.png",
 	}
 
 	var b bytes.Buffer
-	err = json.NewEncoder(&b).Encode(&f)
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when encoding user", err)
-	}
+	err := json.NewEncoder(&b).Encode(&f)
+	assert.NoError(ts.T(), err)
 
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/{id}", &b)
@@ -41,48 +30,23 @@ func TestModify(t *testing.T) {
 
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
-	rows := sqlmock.NewRows([]string{"id", "folder_id", "owner_id", "name", "type", "path", "created_at", "modified_at", "deleted"}).
-		AddRow(1, 1, 1, "learning-golang.png", "image/png", "/", time.Now(), time.Now(), false)
+	setMockGet(ts.mock)
+	setMockUpdate(ts.mock)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM files WHERE id = $1;`)).
-		WithArgs(1).
-		WillReturnRows(rows)
-
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE files SET name=$1, modified_at=$2, deleted=$3 WHERE id=$4`)).
-		WithArgs(f.Name, AnyTime{}, false, f.ID).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	h.Modify(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("error: %v", rr)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
+	ts.handler.Modify(rr, req)
+	assert.Equal(ts.T(), http.StatusOK, rr.Code)
 
 }
 
-func TestUpdate(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+func (ts *TransactionSuite) TestUpdate() {
+	setMockUpdate(ts.mock)
 
+	err := Update(ts.conn, 1, &File{Name: "Gopher.png"})
+	assert.NoError(ts.T(), err)
+}
+
+func setMockUpdate(mock sqlmock.Sqlmock) {
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE files SET name=$1, modified_at=$2, deleted=$3 WHERE id=$4`)).
-		WithArgs("Gopher-SP", AnyTime{}, false, 1).
+		WithArgs("Gopher.png", AnyTime{}, false, 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	err = Update(db, 1, &File{Name: "Gopher-SP"})
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
 }

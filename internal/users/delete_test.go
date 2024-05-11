@@ -2,65 +2,61 @@ package users
 
 import (
 	"context"
+	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 )
 
-func TestDeleteHTTP(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	h := handler{db}
-
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodDelete, "/{id}", nil)
-
-	ctx := chi.NewRouteContext()
-	ctx.URLParams.Add("id", "1")
-
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
-
-	mock.ExpectExec(`UPDATE users SET *`).
-		WithArgs(AnyTime{}, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	h.Delete(rr, req)
-
-	if rr.Code != http.StatusNoContent {
-		t.Errorf("error: %v", rr)
+func (ts *TransactionSuite) TestDeleteHTTP() {
+	tcs := []struct {
+		ID                 string
+		WithMock           bool
+		MockID             int64
+		MockWithErr        bool
+		ExpectedStatusCode int
+	}{
+		{"1", true, 1, false, http.StatusNoContent},
+		{"A", false, -1, true, http.StatusInternalServerError},
+		{"25", true, 25, true, http.StatusInternalServerError},
 	}
 
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
+	for _, tc := range tcs {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodDelete, "/{id}", nil)
+
+		ctx := chi.NewRouteContext()
+		ctx.URLParams.Add("id", tc.ID)
+
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
+
+		if tc.WithMock {
+			setMockDelete(ts.mock, tc.MockID, tc.MockWithErr)
+		}
+
+		ts.handler.Delete(rr, req)
+		assert.Equal(ts.T(), tc.ExpectedStatusCode, rr.Code)
 	}
 
 }
 
-func TestDelete(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+func (ts *TransactionSuite) TestDelete() {
+	setMockDelete(ts.mock, 1, false)
 
-	mock.ExpectExec(`UPDATE users SET *`).
-		WithArgs(AnyTime{}, 1).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	err := Delete(ts.conn, 1)
+	assert.NoError(ts.T(), err)
+}
 
-	err = Delete(db, 1)
-	if err != nil {
-		t.Error(err)
+func setMockDelete(mock sqlmock.Sqlmock, id int64, err bool) {
+	exp := mock.ExpectExec(`UPDATE users SET *`).
+		WithArgs(AnyTime{}, 1)
+
+	if err {
+		exp.WillReturnError(sql.ErrNoRows)
+	} else {
+		exp.WillReturnResult(sqlmock.NewResult(1, 1))
 	}
 
-	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Error(err)
-	}
 }
