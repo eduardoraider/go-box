@@ -46,6 +46,19 @@ type User struct {
 	LastLogin  time.Time `json:"last_login"`
 }
 
+func VerifyPassword(hash string, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func encryptPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
 func (u *User) SetPassword(password string) error {
 	if password == "" {
 		return ErrPasswordRequired
@@ -53,7 +66,7 @@ func (u *User) SetPassword(password string) error {
 	if len(password) < 8 {
 		return ErrPasswordLength
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := encryptPassword(password)
 	if err != nil {
 		fmt.Println("error hashing password", err)
 	}
@@ -70,8 +83,8 @@ func (u *User) Validate() error {
 		return ErrLoginRequired
 	}
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(""), bcrypt.DefaultCost)
-	if u.Password == string(hashedPassword) {
+	hashedPassword, _ := encryptPassword("")
+	if u.Password == hashedPassword {
 		return ErrPasswordRequired
 	}
 
