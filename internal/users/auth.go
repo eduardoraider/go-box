@@ -38,6 +38,6 @@ func Authenticate(login, password string) (u *User, err error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return
 }

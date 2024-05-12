@@ -14,27 +14,6 @@ var (
 	ErrPasswordLength   = errors.New("password must be at least 8 characters")
 )
 
-func New(name, login, password string) (*User, error) {
-
-	u := User{
-		Name:       name,
-		Login:      login,
-		ModifiedAt: time.Now(),
-	}
-
-	err := u.SetPassword(password)
-	if err != nil {
-		return nil, err
-	}
-
-	err = u.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	return &u, nil
-}
-
 type User struct {
 	ID         int64     `json:"id"`
 	Name       string    `json:"name"`
@@ -44,6 +23,14 @@ type User struct {
 	ModifiedAt time.Time `json:"modified_at"`
 	Deleted    bool      `json:"-"`
 	LastLogin  time.Time `json:"last_login"`
+}
+
+func (u *User) GetID() int64 {
+	return u.ID
+}
+
+func (u *User) GetName() string {
+	return u.Name
 }
 
 func VerifyPassword(hash string, password string) bool {
