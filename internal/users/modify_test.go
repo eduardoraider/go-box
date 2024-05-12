@@ -45,7 +45,7 @@ func (ts *TransactionSuite) TestUpdate() {
 }
 
 func setMockUpdate(mock sqlmock.Sqlmock) {
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE users SET name=$1, modified_at=$2 WHERE id=$3`)).
-		WithArgs("Eduardo", AnyTime{}, 1).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE users SET name=$1, modified_at=$2, last_login=$3  WHERE id=$4`)).
+		WithArgs("Eduardo", AnyTime{}, AnyTime{}, 1).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 }
