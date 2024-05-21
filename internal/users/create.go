@@ -17,6 +17,7 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 
 	err = u.SetPassword(u.Password)
 	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -43,12 +44,12 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 
 }
 
-func Insert(db *sql.DB, u *User) (int64, error) {
-	stmt := `INSERT INTO users(name, login, password, modified_at) values($1, $2, $3, $4)`
-	result, err := db.Exec(stmt, u.Name, u.Login, u.Password, u.ModifiedAt)
+func Insert(db *sql.DB, u *User) (id int64, err error) {
+	stmt := `INSERT INTO users(name, login, password, modified_at) values($1, $2, $3, $4) RETURNING id`
+	err = db.QueryRow(stmt, u.Name, u.Login, u.Password, u.ModifiedAt).Scan(&id)
 	if err != nil {
 		return -1, err
 	}
 
-	return result.LastInsertId()
+	return
 }

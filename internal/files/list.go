@@ -4,20 +4,23 @@ import "database/sql"
 
 func List(db *sql.DB, folderId int64) ([]File, error) {
 	stmt := `SELECT * FROM files WHERE folder_id=$1 AND deleted=false`
-	return selectAllFiles(db, stmt, folderId)
-}
-
-func ListRoot(db *sql.DB) ([]File, error) {
-	stmt := `SELECT * FROM files WHERE folder_id IS NULL AND deleted=false`
-	return selectAllFiles(db, stmt, 0)
-}
-
-func selectAllFiles(db *sql.DB, stmt string, folderId int64) ([]File, error) {
 	rows, err := db.Query(stmt, folderId)
 	if err != nil {
 		return nil, err
 	}
+	return listFiles(rows), nil
+}
 
+func ListRoot(db *sql.DB) ([]File, error) {
+	stmt := `SELECT * FROM files WHERE folder_id IS NULL AND deleted=false`
+	rows, err := db.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	return listFiles(rows), nil
+}
+
+func listFiles(rows *sql.Rows) []File {
 	files := make([]File, 0)
 	for rows.Next() {
 		var f File
@@ -31,5 +34,5 @@ func selectAllFiles(db *sql.DB, stmt string, folderId int64) ([]File, error) {
 		files = append(files, f)
 	}
 
-	return files, nil
+	return files
 }

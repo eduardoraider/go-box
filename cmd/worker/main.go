@@ -17,7 +17,7 @@ import (
 func main() {
 	// rabbitmq config
 	qcfg := queue.RabbitMQConfig{
-		URL:       os.Getenv("RABBITMQ_URL"),
+		URL:       "amqp://" + os.Getenv("RABBITMQ_URL"),
 		TopicName: os.Getenv("RABBITMQ_TOPIC_NAME"),
 		Timeout:   time.Second * 30,
 	}
@@ -30,10 +30,7 @@ func main() {
 
 	// create channel to consume messages
 	c := make(chan queue.AppQueueDto)
-	err = qc.Consume(c)
-	if err != nil {
-		return
-	}
+	go qc.Consume(c)
 
 	// bucket config
 	bcfg := bucket.AwsConfig{
@@ -54,11 +51,21 @@ func main() {
 		panic(err)
 	}
 
-	for msg := range c {
-		src := fmt.Sprintf("%s/%s", msg.Path, msg.Filename)
-		dst := fmt.Sprintf("%s_%s", msg.ID, msg.Filename)
+	log.Printf("Waiting for messages")
 
-		file, err := b.Download(src, dst)
+	for msg := range c {
+
+		dst := fmt.Sprintf("%d_%s", msg.ID, msg.Filename)
+
+		log.Printf("Start working on %s", msg.Filename)
+
+		err := b.Download(msg.Path, dst)
+		if err != nil {
+			log.Printf("ERROR: %v", err)
+			continue
+		}
+
+		file, err := os.Open(dst)
 		if err != nil {
 			log.Printf("ERROR: %v", err)
 			continue
@@ -89,7 +96,7 @@ func main() {
 			continue
 		}
 
-		err = b.Upload(zr, src)
+		err = b.Upload(zr, msg.Path)
 		if err != nil {
 			log.Printf("ERROR: %v", err)
 			continue
@@ -100,5 +107,7 @@ func main() {
 			log.Printf("ERROR: %v", err)
 			continue
 		}
+
+		log.Printf("%s was proccessed successfully", msg.Filename)
 	}
 }
