@@ -44,7 +44,7 @@ func updateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Int32VarP(&id, "id", "n", 0, "Folder ID")
+	cmd.Flags().Int32VarP(&id, "id", "", 0, "Folder ID")
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Folder name")
 
 	return cmd

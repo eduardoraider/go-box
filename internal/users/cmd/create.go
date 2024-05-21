@@ -38,9 +38,9 @@ func createCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			_, err = requests.AuthenticatedPost("/users", &body)
+			_, err = requests.Post("/users", &body)
 			if err != nil {
-				log.Printf("Error creating user %s: %s", name, err)
+				log.Printf("Error creating user: %s", err)
 				os.Exit(1)
 			}
 

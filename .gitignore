@@ -24,3 +24,9 @@ go.work
 /.fleet
 /.idea
 /.vscode
+
+/cache
+/scripts/shell/env.sh
+api
+gobox
+worker

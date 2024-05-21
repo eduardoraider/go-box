@@ -2,6 +2,7 @@ package files
 
 import (
 	"errors"
+	"github.com/guregu/null/v5"
 	"time"
 )
 
@@ -31,7 +32,7 @@ func New(ownerId int64, name, fileType, path string) (*File, error) {
 
 type File struct {
 	ID         int64     `json:"id"`
-	FolderId   int64     `json:"-"`
+	FolderId   null.Int  `json:"-"`
 	OwnerId    int64     `json:"owner_id"`
 	Name       string    `json:"name"`
 	Type       string    `json:"type"`

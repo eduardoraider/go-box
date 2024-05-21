@@ -28,7 +28,7 @@ func createToken(authenticated Authenticated) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(jwtSecret)
+	return token.SignedString([]byte(jwtSecret))
 }
 
 type Credentials struct {
