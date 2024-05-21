@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/eduardoraider/go-box/internal/queue"
+	"github.com/guregu/null/v5"
 	"net/http"
 	"strconv"
 )
@@ -49,7 +50,7 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		entity.FolderId = int64(fid)
+		entity.FolderId = null.IntFrom(int64(fid))
 	}
 
 	id, err := Insert(h.db, entity)
@@ -87,12 +88,12 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 
 }
 
-func Insert(db *sql.DB, f *File) (int64, error) {
-	stmt := `INSERT INTO files (folder_id, owner_id, name, type, path, modified_at) VALUES ($1, $2, $3, $4, $5, $6)`
-	result, err := db.Exec(stmt, f.FolderId, f.OwnerId, f.Name, f.Type, f.Path, f.ModifiedAt)
+func Insert(db *sql.DB, f *File) (id int64, err error) {
+	stmt := `INSERT INTO files (folder_id, owner_id, name, type, path, modified_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	err = db.QueryRow(stmt, f.FolderId, f.OwnerId, f.Name, f.Type, f.Path, f.ModifiedAt).Scan(&id)
 	if err != nil {
 		return 1, err
 	}
 
-	return result.LastInsertId()
+	return
 }

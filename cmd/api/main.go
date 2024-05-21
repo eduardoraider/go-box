@@ -33,6 +33,7 @@ func main() {
 	users.SetRoutes(r, db)
 
 	// start server
+	fmt.Println("Server Listening on port 8090")
 	http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")), r)
 }
 
@@ -45,7 +46,7 @@ func getSessions() (*sql.DB, *bucket.Bucket, *queue.Queue) {
 
 	// rabbitmq config
 	qcfg := queue.RabbitMQConfig{
-		URL:       os.Getenv("RABBITMQ_URL"),
+		URL:       "amqp://" + os.Getenv("RABBITMQ_URL"),
 		TopicName: os.Getenv("RABBITMQ_TOPIC_NAME"),
 		Timeout:   time.Second * 30,
 	}
@@ -65,8 +66,8 @@ func getSessions() (*sql.DB, *bucket.Bucket, *queue.Queue) {
 				os.Getenv("AWS_SECRET_ACCESS_KEY"),
 				""),
 		},
-		BucketDownload: "wookye-gobox-raw",
-		BucketUpload:   "wookye-gobox-gzip",
+		BucketDownload: "wookye-gobox-gzip",
+		BucketUpload:   "wookye-gobox-raw",
 	}
 
 	// create new bucket session

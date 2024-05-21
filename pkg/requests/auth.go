@@ -39,10 +39,11 @@ func createTokenCache(body io.ReadCloser) error {
 		return err
 	}
 
-	file, err := os.Create("/cache/.cacheToken")
+	file, err := os.Create("./cache/.cacheToken")
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	cache := cacheToken{string(token)}
 	data, err := json.Marshal(&cache)
@@ -56,7 +57,7 @@ func createTokenCache(body io.ReadCloser) error {
 }
 
 func readCacheToken() (string, error) {
-	data, err := os.ReadFile("/cache/.cacheToken")
+	data, err := os.ReadFile("./cache/.cacheToken")
 	if err != nil {
 		return "", err
 	}

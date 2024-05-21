@@ -31,17 +31,12 @@ type awsSession struct {
 	bucketUpload   string
 }
 
-func (as *awsSession) Download(src, dst string) (file *os.File, err error) {
-	file, err = os.Create(dst)
+func (as *awsSession) Download(src, dst string) error {
+	file, err := os.Create(dst)
 	if err != nil {
-		return
+		return err
 	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-
-		}
-	}(file)
+	defer file.Close()
 
 	downloader := s3manager.NewDownloader(as.sess)
 
@@ -51,7 +46,7 @@ func (as *awsSession) Download(src, dst string) (file *os.File, err error) {
 			Key:    aws.String(src),
 		})
 
-	return
+	return nil
 }
 
 func (as *awsSession) Upload(file io.Reader, key string) (err error) {

@@ -4,7 +4,7 @@ import "github.com/spf13/cobra"
 
 func Register(c *cobra.Command) {
 	cmd := &cobra.Command{
-		Use:   "file",
+		Use:   "files",
 		Short: "Manage files",
 	}
 

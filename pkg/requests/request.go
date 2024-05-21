@@ -8,7 +8,7 @@ import (
 )
 
 func doRequest(method, path string, body io.Reader, headers map[string]string, auth bool) (*http.Response, error) {
-	url := fmt.Sprintf("http://localhost:8000%s", path)
+	url := fmt.Sprintf("http://localhost:8090%s", path)
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
@@ -24,10 +24,10 @@ func doRequest(method, path string, body io.Reader, headers map[string]string, a
 	}
 
 	if auth {
-		token, err := readCacheToken()
-		if err != nil {
-			log.Printf("Failed to read token from cache: %s", err)
-			return nil, err
+		token, err2 := readCacheToken()
+		if err2 != nil {
+			log.Printf("Failed to read token from cache: %s", err2)
+			return nil, err2
 		}
 
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))

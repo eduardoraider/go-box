@@ -13,7 +13,10 @@ type RabbitMQConfig struct {
 }
 
 func newRabbitConn(cfg RabbitMQConfig) (rc *RabbitConnection, err error) {
-	rc.cfg = cfg
+	rc = &RabbitConnection{
+		cfg: cfg,
+	}
+
 	rc.conn, err = amqp.Dial(cfg.URL)
 	return rc, err
 }

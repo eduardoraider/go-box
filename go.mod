@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.52.2
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/guregu/null/v5 v5.0.0
 	github.com/lib/pq v1.10.9
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/cobra v1.8.0

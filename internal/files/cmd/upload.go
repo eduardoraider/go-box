@@ -61,7 +61,7 @@ func uploadCmd() *cobra.Command {
 				"Content-Type": mw.FormDataContentType(),
 			}
 
-			_, err = requests.AuthenticatedPostWithHeaders("files", &body, headers)
+			_, err = requests.AuthenticatedPostWithHeaders("/files", &body, headers)
 			if err != nil {
 				log.Printf("Error uploading file: %v", err)
 				os.Exit(1)
@@ -71,8 +71,8 @@ func uploadCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Int32VarP(&folderID, "folder", "p", 0, "Folder ID")
 	cmd.Flags().StringVarP(&fileName, "filename", "f", "", "File path")
+	cmd.Flags().Int32VarP(&folderID, "folder", "p", 0, "Folder ID")
 
 	return cmd
 }

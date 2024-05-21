@@ -2,7 +2,6 @@ package bucket
 
 import (
 	"io"
-	"os"
 )
 
 type MockBucket struct {
@@ -20,8 +19,8 @@ func (mb *MockBucket) Upload(file io.Reader, key string) error {
 	return nil
 }
 
-func (mb *MockBucket) Download(src, dst string) (*os.File, error) {
-	return nil, nil
+func (mb *MockBucket) Download(src, dst string) error {
+	return nil
 }
 
 func (mb *MockBucket) Delete(key string) error {
