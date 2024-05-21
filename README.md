@@ -2,6 +2,7 @@
 Personal Cloud Storage in Go
 
 - Golang
+- Testify
 - PostgreSQL
 - RabbitMQ
 - Terraform
