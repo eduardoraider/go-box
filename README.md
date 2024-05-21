@@ -2,7 +2,10 @@
 Personal Cloud Storage in Go
 
 - Golang
+<<<<<<< HEAD
 - Testify
+=======
+>>>>>>> b090936 (debug and build)
 - PostgreSQL
 - RabbitMQ
 - Terraform
