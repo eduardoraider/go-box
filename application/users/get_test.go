@@ -26,13 +26,6 @@ func (ts *TransactionSuite) TestGetByID() {
 	assert.Equal(ts.T(), http.StatusOK, rr.Code)
 }
 
-func (ts *TransactionSuite) TestGet() {
-	setMockGet(ts.mock)
-
-	_, err := Get(ts.conn, 1)
-	assert.NoError(ts.T(), err)
-}
-
 func setMockGet(mock sqlmock.Sqlmock) {
 	rows := sqlmock.NewRows([]string{"id", "name", "login", "password", "created_at", "modified_at", "deleted", "last_login"}).
 		AddRow(1, "Eduardo", "wookye.dev@gmail.com", "12345678", time.Now(), time.Now(), false, time.Now())

@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/eduardoraider/go-box/factories"
+	"github.com/eduardoraider/go-box/internal/users"
+	"github.com/eduardoraider/go-box/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -22,7 +25,7 @@ type TransactionSuite struct {
 	conn    *sql.DB
 	mock    sqlmock.Sqlmock
 	handler handler
-	entity  *User
+	entity  *users.User
 }
 
 func (ts *TransactionSuite) SetupTest() {
@@ -30,11 +33,15 @@ func (ts *TransactionSuite) SetupTest() {
 	ts.conn, ts.mock, err = sqlmock.New()
 	assert.NoError(ts.T(), err)
 
-	ts.handler = handler{ts.conn}
+	repo := repositories.NewUserRepository(ts.conn)
+	factory := factories.NewUserFactory(repo)
 
-	ts.entity = &User{
-		Name:  "Eduardo",
-		Login: "wookye.dev@gmail.com",
+	ts.handler = handler{repo, factory}
+
+	ts.entity = &users.User{
+		Name:     "Eduardo",
+		Login:    "wookye.dev@gmail.com",
+		Password: "12345678",
 	}
 	assert.NoError(ts.T(), err)
 }

@@ -19,13 +19,6 @@ func (ts *TransactionSuite) TestList() {
 	assert.Equal(ts.T(), http.StatusOK, rr.Code)
 }
 
-func (ts *TransactionSuite) TestSelectAll() {
-	setMockList(ts.mock)
-
-	_, err := SelectAll(ts.conn)
-	assert.NoError(ts.T(), err)
-}
-
 func setMockList(mock sqlmock.Sqlmock) {
 	rows := sqlmock.NewRows([]string{"id", "name", "login", "password", "created_at", "modified_at", "deleted", "last_login"}).
 		AddRow(1, "Eduardo", "wookye.dev@gmail.com", "12345678", time.Now(), time.Now(), false, time.Now()).

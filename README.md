@@ -7,7 +7,8 @@ Personal Cloud Storage in Go
 - RabbitMQ
 - Terraform
 - Kubernetes
-
+- TDD
+- DDD
 
 ## License
 

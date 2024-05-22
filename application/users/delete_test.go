@@ -42,16 +42,9 @@ func (ts *TransactionSuite) TestDeleteHTTP() {
 
 }
 
-func (ts *TransactionSuite) TestDelete() {
-	setMockDelete(ts.mock, 1, false)
-
-	err := Delete(ts.conn, 1)
-	assert.NoError(ts.T(), err)
-}
-
 func setMockDelete(mock sqlmock.Sqlmock, id int64, err bool) {
 	exp := mock.ExpectExec(`UPDATE users SET *`).
-		WithArgs(AnyTime{}, 1)
+		WithArgs(AnyTime{}, id)
 
 	if err {
 		exp.WillReturnError(sql.ErrNoRows)

@@ -10,10 +10,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+
+	domain "github.com/eduardoraider/go-box/internal/users"
 )
 
 func (ts *TransactionSuite) TestModify() {
-	u := User{
+	u := domain.User{
 		ID:   1,
 		Name: "Eduardo",
 	}
@@ -30,18 +32,11 @@ func (ts *TransactionSuite) TestModify() {
 
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
-	setMockUpdate(ts.mock)
 	setMockGet(ts.mock)
+	setMockUpdate(ts.mock)
 
 	ts.handler.Modify(rr, req)
 	assert.Equal(ts.T(), http.StatusOK, rr.Code)
-}
-
-func (ts *TransactionSuite) TestUpdate() {
-	setMockUpdate(ts.mock)
-
-	err := Update(ts.conn, 1, &User{Name: "Eduardo"})
-	assert.NoError(ts.T(), err)
 }
 
 func setMockUpdate(mock sqlmock.Sqlmock) {
