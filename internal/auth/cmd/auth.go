@@ -21,11 +21,15 @@ func authenticate() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err := requests.Auth("/auth", user, pass)
-			if err != nil {
-				log.Println(err)
-				os.Exit(1)
+			mode := cmd.Parent().Flag("mode").Value.String()
+
+			switch mode {
+			case "http":
+				authWithHTTP(user, pass)
+			case "grpc":
+				authWithGRPC(user, pass)
 			}
+
 		},
 	}
 
@@ -33,4 +37,20 @@ func authenticate() *cobra.Command {
 	cmd.Flags().StringVarP(&pass, "pass", "p", "", "password")
 
 	return cmd
+}
+
+func authWithHTTP(user, pass string) {
+	err := requests.HTTPAuth("/auth", user, pass)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+}
+
+func authWithGRPC(user, pass string) {
+	err := requests.GRPCAuth(user, pass)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 }
