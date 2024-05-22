@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/eduardoraider/go-box/application/users"
+	"github.com/eduardoraider/go-box/factories"
 	"github.com/eduardoraider/go-box/internal/auth"
 	"github.com/eduardoraider/go-box/internal/bucket"
 	"github.com/eduardoraider/go-box/internal/files"
 	"github.com/eduardoraider/go-box/internal/folders"
 	"github.com/eduardoraider/go-box/internal/queue"
-	"github.com/eduardoraider/go-box/internal/users"
 	"github.com/eduardoraider/go-box/pkg/database"
+	"github.com/eduardoraider/go-box/repositories"
 	"github.com/go-chi/chi"
 	"log"
 	"net/http"
@@ -30,7 +32,10 @@ func main() {
 
 	files.SetRoutes(r, db, b, qc)
 	folders.SetRoutes(r, db)
-	users.SetRoutes(r, db)
+
+	ur := repositories.NewUserRepository(db)
+	uf := factories.NewUserFactory(ur)
+	users.SetRoutes(r, ur, uf)
 
 	// start server
 	fmt.Println("Server Listening on port 8090")

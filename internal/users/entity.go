@@ -2,7 +2,6 @@ package users
 
 import (
 	"errors"
-	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -33,33 +32,51 @@ func (u *User) GetName() string {
 	return u.Name
 }
 
+func (u *User) ChangeName(name string) error {
+	if name == "" {
+		return ErrNameRequired
+	}
+
+	u.Name = name
+
+	return nil
+}
+
+func (u *User) GetPassword() string {
+	return u.Password
+}
+
+func (u *User) GetLogin() string {
+	return u.Login
+}
+
 func VerifyPassword(hash string, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
-func encryptPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashedPassword), nil
-}
-
-func (u *User) SetPassword(password string) error {
-	if password == "" {
+func encryptPassword(u *User) error {
+	if u.Password == "" {
 		return ErrPasswordRequired
 	}
-	if len(password) < 8 {
+	if len(u.Password) < 8 {
 		return ErrPasswordLength
 	}
-	hashedPassword, err := encryptPassword(password)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		fmt.Println("error hashing password", err)
+		return err
 	}
+
 	u.Password = string(hashedPassword)
 
 	return nil
+}
+
+func (u *User) ChangePassword(password string) error {
+	u.Password = password
+
+	return encryptPassword(u)
 }
 
 func (u *User) Validate() error {
@@ -68,11 +85,6 @@ func (u *User) Validate() error {
 	}
 	if u.Login == "" {
 		return ErrLoginRequired
-	}
-
-	hashedPassword, _ := encryptPassword("")
-	if u.Password == hashedPassword {
-		return ErrPasswordRequired
 	}
 
 	return nil

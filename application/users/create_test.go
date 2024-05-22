@@ -2,12 +2,15 @@ package users
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"net/http/httptest"
+
+	domain "github.com/eduardoraider/go-box/internal/users"
 )
 
 func (ts *TransactionSuite) TestCreate() {
@@ -18,10 +21,10 @@ func (ts *TransactionSuite) TestCreate() {
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/", &b)
 
-	setMockInsert(ts.mock, ts.entity)
+	setMockInsert(ts.mock, ts.entity, false)
 
 	ts.handler.Create(rr, req)
-	assert.Equal(ts.T(), http.StatusOK, rr.Code)
+	assert.Equal(ts.T(), http.StatusCreated, rr.Code)
 }
 
 func (ts *TransactionSuite) TestPasswordHashing() {
@@ -32,14 +35,14 @@ func (ts *TransactionSuite) TestPasswordHashing() {
 	assert.NoError(ts.T(), err)
 }
 
-func (ts *TransactionSuite) TestInsert() {
-	setMockInsert(ts.mock, ts.entity)
-	_, err := Insert(ts.conn, ts.entity)
-	assert.NoError(ts.T(), err)
-}
+func setMockInsert(mock sqlmock.Sqlmock, entity *domain.User, err bool) {
+	exp := mock.ExpectQuery(`INSERT INTO users(name, login, password, modified_at)* `).
+		WithArgs(entity.Name, entity.Login, sqlmock.AnyArg(), entity.ModifiedAt)
 
-func setMockInsert(mock sqlmock.Sqlmock, entity *User) {
-	mock.ExpectExec(`INSERT INTO users(name, login, password, modified_at)*`).
-		WithArgs(entity.Name, entity.Login, entity.Password, entity.ModifiedAt).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	if err {
+		exp.WillReturnError(sql.ErrConnDone)
+	} else {
+		exp.WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	}
+
 }
