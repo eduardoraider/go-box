@@ -1,13 +1,17 @@
 package auth
 
 import (
-	"encoding/json"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"os"
 	"time"
 )
 
-var jwtSecret = "vldithAKofreruch6sT1BR2Spe8hi3OrLdr7c0idrlcinlswenidRANA7usten2d"
+var jwtSecret = os.Getenv("JWT_SECRET")
+
+func GetSecret() string {
+	return jwtSecret
+}
 
 type Claims struct {
 	UserID   int64  `json:"user_id"`
@@ -28,7 +32,7 @@ func createToken(authenticated Authenticated) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(jwtSecret))
+	return token.SignedString([]byte(GetSecret()))
 }
 
 type Credentials struct {
@@ -36,25 +40,27 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-func (h *handler) auth(rw http.ResponseWriter, r *http.Request) {
-	var creds Credentials
-	err := json.NewDecoder(r.Body).Decode(&creds)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
+type Authenticated interface {
+	GetID() int64
+	GetName() string
+}
 
+type authenticateFunc func(string, string) (Authenticated, error)
+
+type handler struct {
+	authenticate authenticateFunc
+}
+
+func (h *handler) auth(creds Credentials) (token string, err error, code int) {
 	u, err := h.authenticate(creds.Username, creds.Password)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusUnauthorized)
-		return
+		return "", err, http.StatusUnauthorized
 	}
 
-	token, err := createToken(u)
+	token, err = createToken(u)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
+		return "", err, http.StatusInternalServerError
 	}
 
-	rw.Write([]byte(token))
+	return token, nil, http.StatusOK
 }

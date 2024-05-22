@@ -12,6 +12,10 @@ import (
 var RootCmd = &cobra.Command{}
 
 func main() {
+	var mode string
+
+	RootCmd.PersistentFlags().StringVarP(&mode, "mode", "m", "http", "API mode connection")
+
 	authCmd.Register(RootCmd)
 	userCmd.Register(RootCmd)
 	filesCmd.Register(RootCmd)

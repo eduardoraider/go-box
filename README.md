@@ -4,9 +4,11 @@ Personal Cloud Storage in Go
 - Golang
 - Testify
 - PostgreSQL
-- RabbitMQ
+- RabbitMQ / Worker
 - Terraform
 - Kubernetes
+- CLI
+- gRPC
 - TDD
 - DDD
 

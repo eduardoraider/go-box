@@ -2,7 +2,9 @@ package requests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	pb "github.com/eduardoraider/go-box/proto/v1/auth"
 	"io"
 	"os"
 )
@@ -12,7 +14,7 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-func Auth(path, user, pass string) error {
+func HTTPAuth(path, user, pass string) error {
 	creds := &Credentials{user, pass}
 
 	var body bytes.Buffer
@@ -26,18 +28,38 @@ func Auth(path, user, pass string) error {
 		return err
 	}
 
-	return createTokenCache(res.Body)
+	token, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	return createTokenCache(string(token))
+}
+
+func GRPCAuth(user, pass string) error {
+	creds := &pb.Credentials{
+		Username: user,
+		Password: pass,
+	}
+
+	conn := GetGRPCConn()
+	defer conn.Close()
+
+	client := pb.NewAuthServiceClient(conn)
+
+	res, err := client.Login(context.Background(), creds)
+	if err != nil {
+		return err
+	}
+
+	return createTokenCache(res.Token)
 }
 
 type cacheToken struct {
 	Token string `json:"token"`
 }
 
-func createTokenCache(body io.ReadCloser) error {
-	token, err := io.ReadAll(body)
-	if err != nil {
-		return err
-	}
+func createTokenCache(token string) error {
 
 	file, err := os.Create("./cache/.cacheToken")
 	if err != nil {
@@ -45,7 +67,7 @@ func createTokenCache(body io.ReadCloser) error {
 	}
 	defer file.Close()
 
-	cache := cacheToken{string(token)}
+	cache := cacheToken{token}
 	data, err := json.Marshal(&cache)
 	if err != nil {
 		return err
